@@ -13,8 +13,32 @@ st.set_page_config(
 st.title("🎵 AURA-Flux: Multi-Sensory Earth Information Jukebox")
 st.markdown("**Translating NASA EMIT Hyperspectral Plumes & GEOS-FP Winds into Accessible Real-Time Soundscapes**")
 
+st.divider()
+
 # -----------------------------------------------------------------------------
-# 2. PHYSICS & INVERSION ENGINE
+# 2. INTERACTIVE CONTROLS (PLACED DIRECTLY ON THE MAIN PAGE)
+# -----------------------------------------------------------------------------
+st.subheader("🕹️ Interactive Jukebox Controls & NASA Data Stream")
+
+col_c1, col_c2 = st.columns(2)
+with col_c1:
+    scene_option = st.selectbox(
+        "Select NASA EIC / EMIT Visual Frame",
+        ["Permian Basin (Oil & Gas) - Granule #20230815", "Turkmenistan Super-Emitter - Granule #20230902"]
+    )
+with col_c2:
+    u10_wind = st.slider("NASA GEOS-FP 10m Wind Speed (m/s)", 0.5, 12.0, 3.8)
+
+col_c3, col_c4 = st.columns(2)
+with col_c3:
+    base_freq = st.slider("Audio Synth Root Frequency (Hz)", 130, 440, 220)
+with col_c4:
+    bg_noise_input = st.slider("Upwind Background Noise StdDev (ppm·m)", 5.0, 30.0, 12.4)
+
+st.divider()
+
+# -----------------------------------------------------------------------------
+# 3. PHYSICS & INVERSION ENGINE
 # -----------------------------------------------------------------------------
 class LIMEInversionEngine:
     def __init__(self, pixel_size_m: float = 60.0):
@@ -59,19 +83,6 @@ class LIMEInversionEngine:
 engine = LIMEInversionEngine(pixel_size_m=60.0)
 
 # -----------------------------------------------------------------------------
-# 3. SIDEBAR CONTROLS
-# -----------------------------------------------------------------------------
-st.sidebar.header("🕹️ Jukebox Controls & NASA Data Stream")
-scene_option = st.sidebar.selectbox(
-    "Select NASA EIC / EMIT Visual Frame",
-    ["Permian Basin (Oil & Gas) - Granule #20230815", "Turkmenistan Super-Emitter - Granule #20230902"]
-)
-
-u10_wind = st.sidebar.slider("NASA GEOS-FP 10m Wind Speed (m/s)", 0.5, 12.0, 3.8)
-bg_noise_input = st.sidebar.slider("Upwind Background Noise StdDev (ppm·m)", 5.0, 30.0, 12.4)
-base_freq = st.sidebar.slider("Audio Synth Root Frequency (Hz)", 130, 440, 220)
-
-# -----------------------------------------------------------------------------
 # 4. DATA SYNTHESIS & CALCULATIONS
 # -----------------------------------------------------------------------------
 np.random.seed(42 if "Permian" in scene_option else 101)
@@ -92,6 +103,7 @@ max_enhancement = float(np.max(plume_signal))
 # -----------------------------------------------------------------------------
 # 5. DASHBOARD METRICS DISPLAY
 # -----------------------------------------------------------------------------
+st.subheader("📈 Live Inverted Physics Metrics")
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Emission Mass Rate (Q)", f"{flux_results['Q_kg_hr']} kg/hr", f"± {flux_results['uncertainty_kg_hr']} kg/hr")
 col2.metric("Effective Wind (U_eff)", f"{round(u_eff, 2)} m/s", f"Derived from {u10_wind} m/s U10")
@@ -142,10 +154,9 @@ function playSonification() {{
 st.components.v1.html(audio_html, height=150)
 
 # -----------------------------------------------------------------------------
-# 7. NATIVE STREAMLIT DATA VISUALIZATION (NO EXTERNAL LIBRARIES NEEDED)
+# 7. DATA VISUALIZATION
 # -----------------------------------------------------------------------------
 st.subheader("📊 Cross-Wind Plume Concentration Profile (ppm·m)")
-# Use native streamlit line chart to plot plume intensity across distance
 profile_data = np.max(plume_signal, axis=1)
 st.line_chart(profile_data)
 
