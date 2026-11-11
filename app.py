@@ -1,6 +1,5 @@
 import streamlit as st
 import numpy as np
-import plotly.express as px
 
 # -----------------------------------------------------------------------------
 # 1. PAGE CONFIGURATION & HEADER
@@ -15,7 +14,7 @@ st.title("🎵 AURA-Flux: Multi-Sensory Earth Information Jukebox")
 st.markdown("**Translating NASA EMIT Hyperspectral Plumes & GEOS-FP Winds into Accessible Real-Time Soundscapes**")
 
 # -----------------------------------------------------------------------------
-# 2. PHYSICS & INVERSION ENGINE (EMBEDDED)
+# 2. PHYSICS & INVERSION ENGINE
 # -----------------------------------------------------------------------------
 class LIMEInversionEngine:
     def __init__(self, pixel_size_m: float = 60.0):
@@ -57,7 +56,6 @@ class LIMEInversionEngine:
         confidence = "High" if ops >= 0.08 else ("Moderate" if ops >= 0.04 else "Low")
         return {"Ops": round(float(ops), 4), "confidence": confidence}
 
-# Initialize Engine Instance
 engine = LIMEInversionEngine(pixel_size_m=60.0)
 
 # -----------------------------------------------------------------------------
@@ -77,8 +75,8 @@ base_freq = st.sidebar.slider("Audio Synth Root Frequency (Hz)", 130, 440, 220)
 # 4. DATA SYNTHESIS & CALCULATIONS
 # -----------------------------------------------------------------------------
 np.random.seed(42 if "Permian" in scene_option else 101)
-x = np.linspace(-300, 300, 35)
-y = np.linspace(0, 1200, 35)
+x = np.linspace(-300, 300, 30)
+y = np.linspace(0, 1200, 30)
 X, Y = np.meshgrid(x, y)
 
 peak_val = 420 if "Permian" in scene_option else 680
@@ -144,16 +142,11 @@ function playSonification() {{
 st.components.v1.html(audio_html, height=150)
 
 # -----------------------------------------------------------------------------
-# 7. INTERACTIVE VISUAL FRAME DISPLAY
+# 7. NATIVE STREAMLIT DATA VISUALIZATION (NO EXTERNAL LIBRARIES NEEDED)
 # -----------------------------------------------------------------------------
-st.subheader("🖼️ NASA EIC Visual Frame Concentration Map (ppm·m)")
-fig = px.imshow(
-    plume_signal,
-    color_continuous_scale="Viridis",
-    labels=dict(x="Cross-Wind Distance (60m px)", y="Downwind Distance (60m px)", color="CH4 Enhancement"),
-    title=f"NASA EMIT Scene Reconstruction ({scene_option})"
-)
-fig.update_layout(height=500, margin=dict(l=20, r=20, t=40, b=20))
-st.plotly_chart(fig, use_container_width=True)
+st.subheader("📊 Cross-Wind Plume Concentration Profile (ppm·m)")
+# Use native streamlit line chart to plot plume intensity across distance
+profile_data = np.max(plume_signal, axis=1)
+st.line_chart(profile_data)
 
 st.info("ℹ️ **Data Credit**: NASA LP DAAC `EMITL2BCH4PLM` cloud granules integrated with NASA GMAO GEOS-FP wind vectors via `earthaccess`.")
